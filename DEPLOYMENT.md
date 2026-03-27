@@ -4,7 +4,7 @@
 
 This guide provides step-by-step instructions for deploying Ghostline to production using Railway (backend), Vercel (frontend), and Supabase (database).
 
----
+---00000000000000000000
 
 ## Prerequisites
 
@@ -22,6 +22,7 @@ Before deploying, ensure you have:
 
 ### 1.1 Create Supabase Project
 
+1.
 1. Go to [supabase.com](https://supabase.com)
 2. Click "New Project"
 3. Select organization and enter:
