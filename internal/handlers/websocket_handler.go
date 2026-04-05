@@ -16,6 +16,7 @@ import (
 
 	fiberws "github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type WebSocketHandler struct {
@@ -41,12 +42,12 @@ func (h *WebSocketHandler) Upgrade(c *fiber.Ctx) error {
 
 	// Try to get token from cookie first
 	token := strings.TrimSpace(c.Cookies(h.jwtConfig.CookieName))
-	
+
 	// If no token in cookie, try query parameter
 	if token == "" {
 		token = strings.TrimSpace(c.Query("token"))
 	}
-	
+
 	// If still no token, try Authorization header
 	if token == "" {
 		authHeader := strings.TrimSpace(c.Get(fiber.HeaderAuthorization))
@@ -54,7 +55,7 @@ func (h *WebSocketHandler) Upgrade(c *fiber.Ctx) error {
 			token = authHeader[7:] // Extract token after "Bearer "
 		}
 	}
-	
+
 	if token == "" {
 		return utils.Error(c, fiber.StatusUnauthorized, "authentication required", nil)
 	}
@@ -86,6 +87,12 @@ func (h *WebSocketHandler) HandleConnection(conn *fiberws.Conn) {
 
 	_ = client.WriteJSON(internalws.NewConnectedEvent())
 
+	senderID, err := utils.ParseUUID(userID)
+	if err != nil {
+		_ = client.WriteJSON(internalws.NewErrorEvent("invalid authenticated user"))
+		return
+	}
+
 	for {
 		var inbound internalws.IncomingMessage
 		if err := conn.ReadJSON(&inbound); err != nil {
@@ -97,42 +104,129 @@ func (h *WebSocketHandler) HandleConnection(conn *fiberws.Conn) {
 			messageType = internalws.EventTypeMessage
 		}
 
-		if messageType != internalws.EventTypeMessage {
-			_ = client.WriteJSON(internalws.NewErrorEvent("unsupported websocket event type"))
+		if messageType == internalws.EventTypeMessage {
+			h.handleChatWebSocketMessage(client, userID, senderID, inbound)
 			continue
 		}
 
-		senderID, err := utils.ParseUUID(userID)
-		if err != nil {
-			_ = client.WriteJSON(internalws.NewErrorEvent("invalid authenticated user"))
+		if isCallWebSocketEventType(messageType) {
+			h.handleCallWebSocketMessage(client, userID, inbound)
 			continue
 		}
 
-		if h.rateLimiter != nil {
-			allowed, retryAfter := h.rateLimiter.AllowMessageForUser(userID)
-			if !allowed {
-				retryAfterSeconds := int(math.Ceil(retryAfter.Seconds()))
-				if retryAfterSeconds < 1 {
-					retryAfterSeconds = 1
-				}
+		_ = client.WriteJSON(internalws.NewErrorEvent("unsupported websocket event type"))
+	}
+}
 
-				_ = client.WriteJSON(internalws.NewErrorEvent(fmt.Sprintf("message rate limit exceeded. try again in %d seconds.", retryAfterSeconds)))
-				continue
+func (h *WebSocketHandler) handleChatWebSocketMessage(client *internalws.Client, userID string, senderID uuid.UUID, inbound internalws.IncomingMessage) {
+	if h.rateLimiter != nil {
+		allowed, retryAfter := h.rateLimiter.AllowMessageForUser(userID)
+		if !allowed {
+			retryAfterSeconds := int(math.Ceil(retryAfter.Seconds()))
+			if retryAfterSeconds < 1 {
+				retryAfterSeconds = 1
 			}
-		}
 
-		message, err := h.chatService.SendMessage(context.Background(), senderID, models.SendMessageRequest{
-			ReceiverID: inbound.ReceiverID,
-			Content:    inbound.Content,
-		})
-		if err != nil {
-			_ = client.WriteJSON(internalws.NewErrorEvent(h.websocketErrorMessage(err)))
-			continue
+			_ = client.WriteJSON(internalws.NewErrorEvent(fmt.Sprintf("message rate limit exceeded. try again in %d seconds.", retryAfterSeconds)))
+			return
 		}
+	}
 
-		event := internalws.NewMessageEvent(message)
-		_ = client.WriteJSON(event)
-		internalws.BroadcastToUser(h.hub, message.ReceiverID, event)
+	message, err := h.chatService.SendMessage(context.Background(), senderID, models.SendMessageRequest{
+		ReceiverID: inbound.ReceiverID,
+		Content:    inbound.Content,
+	})
+	if err != nil {
+		_ = client.WriteJSON(internalws.NewErrorEvent(h.websocketErrorMessage(err)))
+		return
+	}
+
+	event := internalws.NewMessageEvent(message)
+	_ = client.WriteJSON(event)
+	internalws.BroadcastToUser(h.hub, message.ReceiverID, event)
+}
+
+func (h *WebSocketHandler) handleCallWebSocketMessage(client *internalws.Client, userID string, inbound internalws.IncomingMessage) {
+	receiverID := strings.TrimSpace(inbound.ReceiverID)
+	callID := strings.TrimSpace(inbound.CallID)
+
+	if receiverID == "" {
+		_ = client.WriteJSON(internalws.NewErrorEvent("receiver_id is required for calls"))
+		return
+	}
+
+	if _, err := utils.ParseUUID(receiverID); err != nil {
+		_ = client.WriteJSON(internalws.NewErrorEvent("receiver_id must be a valid UUID"))
+		return
+	}
+
+	if receiverID == userID {
+		_ = client.WriteJSON(internalws.NewErrorEvent("cannot call yourself"))
+		return
+	}
+
+	if callID == "" {
+		_ = client.WriteJSON(internalws.NewErrorEvent("call_id is required for call events"))
+		return
+	}
+
+	switch inbound.Type {
+	case internalws.EventTypeCallOffer, internalws.EventTypeCallAnswer:
+		if inbound.Description == nil || strings.TrimSpace(inbound.Description.Type) == "" || strings.TrimSpace(inbound.Description.SDP) == "" {
+			_ = client.WriteJSON(internalws.NewErrorEvent("description is required for this call event"))
+			return
+		}
+	case internalws.EventTypeCallICECandidate:
+		if inbound.Candidate == nil || strings.TrimSpace(inbound.Candidate.Candidate) == "" {
+			_ = client.WriteJSON(internalws.NewErrorEvent("candidate is required for ICE events"))
+			return
+		}
+	case internalws.EventTypeCallMuteState:
+		if inbound.Muted == nil {
+			_ = client.WriteJSON(internalws.NewErrorEvent("muted state is required"))
+			return
+		}
+	}
+
+	event := internalws.NewCallEvent(
+		inbound.Type,
+		callID,
+		userID,
+		strings.TrimSpace(inbound.Username),
+		strings.TrimSpace(inbound.Reason),
+		inbound.Description,
+		inbound.Candidate,
+		inbound.Muted,
+	)
+
+	delivered := internalws.BroadcastToUser(h.hub, receiverID, event)
+	if delivered {
+		return
+	}
+
+	switch inbound.Type {
+	case internalws.EventTypeCallCancel, internalws.EventTypeCallDecline, internalws.EventTypeCallEnd:
+		return
+	default:
+		_ = client.WriteJSON(internalws.NewErrorEvent("call participant is offline or unavailable"))
+	}
+}
+
+func isCallWebSocketEventType(messageType string) bool {
+	switch messageType {
+	case internalws.EventTypeCallInvite,
+		internalws.EventTypeCallAccept,
+		internalws.EventTypeCallDecline,
+		internalws.EventTypeCallBusy,
+		internalws.EventTypeCallCancel,
+		internalws.EventTypeCallOffer,
+		internalws.EventTypeCallAnswer,
+		internalws.EventTypeCallICECandidate,
+		internalws.EventTypeCallEnd,
+		internalws.EventTypeCallMuteState:
+		return true
+	default:
+		return false
 	}
 }
 
