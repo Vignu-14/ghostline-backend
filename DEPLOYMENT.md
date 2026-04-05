@@ -4,7 +4,7 @@
 
 This guide provides step-by-step instructions for deploying Ghostline to production using Railway (backend), Vercel (frontend), and Supabase (database).
 
----00000000000000000000
+
 
 ## Prerequisites
 
