@@ -3,13 +3,15 @@ package config
 import "time"
 
 const (
-	AppName                  = "anonymous-communication-backend"
-	DefaultPort              = "3000"
-	DefaultEnvironment       = "development"
-	DefaultAllowedOrigin     = "http://localhost:5173"
-	DefaultJWTSecret         = "change-me-for-local-development"
-	DefaultStorageBucketName = "user-uploads"
-	DefaultCookieName        = "auth_token"
+	AppName                      = "anonymous-communication-backend"
+	DefaultPort                  = "3000"
+	DefaultEnvironment           = "development"
+	DefaultAllowedOrigin         = "http://localhost:5173"
+	DefaultJWTSecret             = "change-me-for-local-development"
+	DefaultStorageBucketName     = "user-uploads"
+	DefaultCookieName            = "auth_token"
+	DefaultWebRTCStunURLs        = "stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302"
+	DefaultWebRTCTransportPolicy = "all"
 
 	DefaultReadTimeout     = 15 * time.Second
 	DefaultWriteTimeout    = 15 * time.Second

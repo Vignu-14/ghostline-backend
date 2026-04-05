@@ -14,6 +14,7 @@ type Config struct {
 	JWT       JWTConfig
 	CORS      CORSConfig
 	Storage   StorageConfig
+	WebRTC    WebRTCConfig
 	RateLimit RateLimitConfig
 }
 
@@ -36,6 +37,14 @@ type JWTConfig struct {
 type CORSConfig struct {
 	AllowedOrigin    string
 	AllowCredentials bool
+}
+
+type WebRTCConfig struct {
+	StunURLs        []string
+	TurnURLs        []string
+	TurnUsername    string
+	TurnCredential  string
+	TransportPolicy string
 }
 
 type RateLimitConfig struct {
@@ -85,6 +94,13 @@ func Load() (*Config, error) {
 			SupabaseServiceKey: strings.TrimSpace(os.Getenv("SUPABASE_SERVICE_KEY")),
 			BucketName:         getEnv("STORAGE_BUCKET_NAME", DefaultStorageBucketName),
 		},
+		WebRTC: WebRTCConfig{
+			StunURLs:        splitEnvList("WEBRTC_STUN_URLS", DefaultWebRTCStunURLs),
+			TurnURLs:        splitEnvList("WEBRTC_TURN_URLS", ""),
+			TurnUsername:    strings.TrimSpace(os.Getenv("WEBRTC_TURN_USERNAME")),
+			TurnCredential:  strings.TrimSpace(os.Getenv("WEBRTC_TURN_CREDENTIAL")),
+			TransportPolicy: strings.TrimSpace(getEnv("WEBRTC_ICE_TRANSPORT_POLICY", DefaultWebRTCTransportPolicy)),
+		},
 		RateLimit: RateLimitConfig{
 			LoginAttempts: getEnvInt("RATE_LIMIT_LOGIN_ATTEMPTS", DefaultLoginRateLimitAttempts),
 			LoginWindow:   getEnvDurationMinutes("RATE_LIMIT_LOGIN_WINDOW_MINUTES", DefaultLoginRateLimitWindow),
@@ -123,6 +139,30 @@ func (c *Config) Validate() error {
 
 	if err := c.RateLimit.Validate(); err != nil {
 		return err
+	}
+
+	if err := c.WebRTC.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c WebRTCConfig) Validate() error {
+	switch strings.ToLower(strings.TrimSpace(c.TransportPolicy)) {
+	case "", "all", "relay":
+	default:
+		return fmt.Errorf("WEBRTC_ICE_TRANSPORT_POLICY must be one of: all, relay")
+	}
+
+	if len(c.TurnURLs) > 0 {
+		if strings.TrimSpace(c.TurnUsername) == "" {
+			return fmt.Errorf("WEBRTC_TURN_USERNAME is required when WEBRTC_TURN_URLS is set")
+		}
+
+		if strings.TrimSpace(c.TurnCredential) == "" {
+			return fmt.Errorf("WEBRTC_TURN_CREDENTIAL is required when WEBRTC_TURN_URLS is set")
+		}
 	}
 
 	return nil
@@ -226,4 +266,26 @@ func getEnvDurationMinutes(key string, fallback time.Duration) time.Duration {
 
 func isProduction(environment string) bool {
 	return strings.EqualFold(strings.TrimSpace(environment), "production")
+}
+
+func splitEnvList(key, fallback string) []string {
+	raw := strings.TrimSpace(os.Getenv(key))
+	if raw == "" {
+		raw = fallback
+	}
+
+	if strings.TrimSpace(raw) == "" {
+		return nil
+	}
+
+	values := strings.Split(raw, ",")
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		trimmed := strings.TrimSpace(value)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+
+	return result
 }

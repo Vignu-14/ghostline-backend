@@ -12,6 +12,7 @@ func registerAPIRoutes(
 	healthHandler *handlers.HealthHandler,
 	authHandler *handlers.AuthHandler,
 	adminHandler *handlers.AdminHandler,
+	callHandler *handlers.CallHandler,
 	userHandler *handlers.UserHandler,
 	postHandler *handlers.PostHandler,
 	likeHandler *handlers.LikeHandler,
@@ -28,6 +29,9 @@ func registerAPIRoutes(
 	auth.Post("/login", rateLimiter.Login(), authHandler.Login)
 	auth.Post("/logout", authHandler.Logout)
 	auth.Get("/me", jwtMiddleware.RequireAuth, userHandler.Me)
+
+	calls := api.Group("/calls", jwtMiddleware.RequireAuth)
+	calls.Get("/config", callHandler.Config)
 
 	api.Get("/posts", postHandler.List)
 

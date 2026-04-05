@@ -81,6 +81,7 @@ func run() error {
 	healthHandler := handlers.NewHealthHandler(dbPool)
 	authHandler := handlers.NewAuthHandler(authService, cfg.JWT)
 	adminHandler := handlers.NewAdminHandler(impersonationService, cfg.JWT)
+	callHandler := handlers.NewCallHandler(cfg.WebRTC)
 	userHandler := handlers.NewUserHandler(userService)
 	postHandler := handlers.NewPostHandler(postService)
 	likeHandler := handlers.NewLikeHandler(likeService)
@@ -89,7 +90,7 @@ func run() error {
 	jwtMiddleware := middleware.NewJWTMiddleware(cfg.JWT)
 	adminMiddleware := middleware.NewAdminMiddleware()
 
-	routes.Register(app, healthHandler, authHandler, adminHandler, userHandler, postHandler, likeHandler, chatHandler, websocketHandler, jwtMiddleware, adminMiddleware, rateLimiter)
+	routes.Register(app, healthHandler, authHandler, adminHandler, callHandler, userHandler, postHandler, likeHandler, chatHandler, websocketHandler, jwtMiddleware, adminMiddleware, rateLimiter)
 
 	serverErrors := make(chan error, 1)
 	go func() {
