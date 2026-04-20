@@ -43,7 +43,7 @@ func NewCORS(cfg config.CORSConfig) fiber.Handler {
 // parseOrigins splits comma-separated origin strings into a slice
 func parseOrigins(originStr string) []string {
 	if strings.TrimSpace(originStr) == "" {
-		return []string{"*"}
+		return []string{"ghostline.reporoot.in", "localhost:3000"} // Default allowed origins
 	}
 
 	origins := strings.Split(originStr, ",")
