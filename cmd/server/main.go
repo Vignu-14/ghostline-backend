@@ -82,11 +82,11 @@ func run() error {
 	authHandler := handlers.NewAuthHandler(authService, cfg.JWT)
 	adminHandler := handlers.NewAdminHandler(impersonationService, cfg.JWT)
 	callHandler := handlers.NewCallHandler(cfg.WebRTC)
-	userHandler := handlers.NewUserHandler(userService)
+	userHandler := handlers.NewUserHandler(userService, uploadService)
 	postHandler := handlers.NewPostHandler(postService)
 	likeHandler := handlers.NewLikeHandler(likeService)
 	chatHandler := handlers.NewChatHandler(chatService)
-	websocketHandler := handlers.NewWebSocketHandler(chatService, websocketHub, cfg.JWT, rateLimiter)
+	websocketHandler := handlers.NewWebSocketHandler(chatService, websocketHub, cfg.JWT, cfg.CORS, rateLimiter)
 	jwtMiddleware := middleware.NewJWTMiddleware(cfg.JWT)
 	adminMiddleware := middleware.NewAdminMiddleware()
 

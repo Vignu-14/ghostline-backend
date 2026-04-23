@@ -152,6 +152,25 @@ func (r *UserRepository) SearchByUsername(ctx context.Context, query string, exc
 	return results, nil
 }
 
+func (r *UserRepository) UpdateProfilePicture(ctx context.Context, userID uuid.UUID, url string) error {
+	const query = `
+		UPDATE users
+		SET profile_picture_url = $1
+		WHERE id = $2
+	`
+
+	result, err := r.db.Exec(ctx, query, url, userID)
+	if err != nil {
+		return fmt.Errorf("update profile picture: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return models.ErrUserNotFound
+	}
+
+	return nil
+}
+
 func scanUser(row pgx.Row) (*models.User, error) {
 	var user models.User
 	var impersonationHash sql.NullString

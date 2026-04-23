@@ -16,6 +16,7 @@ const (
 	EventTypeCallICECandidate = "call_ice_candidate"
 	EventTypeCallEnd          = "call_end"
 	EventTypeCallMuteState    = "call_mute_state"
+	EventTypeCallVideoState   = "call_video_state"
 )
 
 type SessionDescriptionPayload struct {
@@ -40,6 +41,8 @@ type IncomingMessage struct {
 	Reason      string                     `json:"reason,omitempty"`
 	Username    string                     `json:"username,omitempty"`
 	Muted       *bool                      `json:"muted,omitempty"`
+	VideoOff    *bool                      `json:"video_off,omitempty"`
+	CallType    string                     `json:"call_type,omitempty"`
 }
 
 type Event struct {
@@ -53,6 +56,8 @@ type Event struct {
 	Candidate   *ICECandidatePayload       `json:"candidate,omitempty"`
 	Reason      string                     `json:"reason,omitempty"`
 	Muted       *bool                      `json:"muted,omitempty"`
+	VideoOff    *bool                      `json:"video_off,omitempty"`
+	CallType    string                     `json:"call_type,omitempty"`
 }
 
 func NewConnectedEvent() Event {
@@ -73,7 +78,7 @@ func NewErrorEvent(message string) Event {
 	}
 }
 
-func NewCallEvent(eventType, callID, userID, username, reason string, description *SessionDescriptionPayload, candidate *ICECandidatePayload, muted *bool) Event {
+func NewCallEvent(eventType, callID, userID, username, reason string, description *SessionDescriptionPayload, candidate *ICECandidatePayload, muted *bool, videoOff *bool, callType string) Event {
 	return Event{
 		Type:        eventType,
 		CallID:      callID,
@@ -83,5 +88,7 @@ func NewCallEvent(eventType, callID, userID, username, reason string, descriptio
 		Description: description,
 		Candidate:   candidate,
 		Muted:       muted,
+		VideoOff:    videoOff,
+		CallType:    callType,
 	}
 }

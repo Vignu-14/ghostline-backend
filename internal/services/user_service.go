@@ -14,6 +14,7 @@ type userRepository interface {
 	FindByID(ctx context.Context, userID uuid.UUID) (*models.User, error)
 	FindByUsername(ctx context.Context, username string) (*models.User, error)
 	SearchByUsername(ctx context.Context, query string, excludeUserID uuid.UUID, limit int) ([]models.UserSearchResult, error)
+	UpdateProfilePicture(ctx context.Context, userID uuid.UUID, url string) error
 }
 
 type userPostRepository interface {
@@ -79,4 +80,18 @@ func (s *UserService) GetProfileByUsername(ctx context.Context, username string,
 
 	profile := user.ToPublicProfile()
 	return &profile, posts, nil
+}
+
+func (s *UserService) UpdateProfilePicture(ctx context.Context, userID uuid.UUID, url string) error {
+	if url == "" {
+		return models.NewValidationError(map[string]string{
+			"url": "profile picture url cannot be empty",
+		})
+	}
+
+	if err := s.users.UpdateProfilePicture(ctx, userID, url); err != nil {
+		return fmt.Errorf("update profile picture: %w", err)
+	}
+
+	return nil
 }

@@ -18,19 +18,7 @@ func NewCORS(cfg config.CORSConfig) fiber.Handler {
 
 	return fibercors.New(fibercors.Config{
 		AllowOriginsFunc: func(origin string) bool {
-			// Allow requests with no origin (same-origin, mobile apps)
-			if origin == "" {
-				return true
-			}
-			// Check if origin is in the allowed list
-			for _, allowed := range allowedOrigins {
-				if strings.EqualFold(origin, allowed) {
-					return true
-				}
-			}
-			// Log rejected origins for debugging
-			slog.Warn("CORS origin rejected", "origin", origin, "allowed", allowedOrigins)
-			return false
+			return IsOriginAllowed(origin, allowedOrigins)
 		},
 		AllowCredentials: cfg.AllowCredentials,
 		AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS",
@@ -40,10 +28,29 @@ func NewCORS(cfg config.CORSConfig) fiber.Handler {
 	})
 }
 
+// IsOriginAllowed checks if a given origin is in the allowed list
+func IsOriginAllowed(origin string, allowedOrigins []string) bool {
+	// Allow requests with no origin (same-origin requests, mobile apps)
+	if origin == "" {
+		return true
+	}
+
+	// Check if origin is in the allowed list
+	for _, allowed := range allowedOrigins {
+		if strings.EqualFold(origin, allowed) {
+			return true
+		}
+	}
+
+	// Log rejected origins for debugging
+	slog.Warn("Origin rejected", "origin", origin, "allowed", allowedOrigins)
+	return false
+}
+
 // parseOrigins splits comma-separated origin strings into a slice
 func parseOrigins(originStr string) []string {
 	if strings.TrimSpace(originStr) == "" {
-		return []string{"ghostline.reporoot.in", "localhost:3000"} // Default allowed origins
+		return []string{config.DefaultAllowedOrigin} // Use default from constants
 	}
 
 	origins := strings.Split(originStr, ",")

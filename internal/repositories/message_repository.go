@@ -23,10 +23,15 @@ func NewMessageRepository(db *pgxpool.Pool) *MessageRepository {
 
 func (r *MessageRepository) Create(ctx context.Context, senderID, receiverID uuid.UUID, content string) (*models.Message, error) {
 	const query = `
-		INSERT INTO messages (sender_id, receiver_id, content)
-		VALUES ($1, $2, $3)
-		RETURNING id, sender_id, receiver_id, content, is_read, created_at,
-		          deleted_for_sender_at, deleted_for_receiver_at, deleted_for_everyone_at
+		WITH inserted AS (
+			INSERT INTO messages (sender_id, receiver_id, content)
+			VALUES ($1, $2, $3)
+			RETURNING id, sender_id, receiver_id, content, is_read, created_at,
+					  deleted_for_sender_at, deleted_for_receiver_at, deleted_for_everyone_at
+		)
+		SELECT i.*, u.profile_picture_url
+		FROM inserted i
+		JOIN users u ON u.id = i.sender_id
 	`
 
 	message, err := scanMessage(r.db.QueryRow(ctx, query, senderID, receiverID, content))
@@ -39,12 +44,14 @@ func (r *MessageRepository) Create(ctx context.Context, senderID, receiverID uui
 
 func (r *MessageRepository) Conversation(ctx context.Context, userID, otherUserID uuid.UUID, limit, offset int) ([]models.MessageResponse, error) {
 	const query = `
-		SELECT id, sender_id, receiver_id, content, is_read, created_at,
-		       deleted_for_sender_at, deleted_for_receiver_at, deleted_for_everyone_at
-		FROM messages
-		WHERE (sender_id = $1 AND receiver_id = $2 AND deleted_for_sender_at IS NULL)
-		   OR (sender_id = $2 AND receiver_id = $1 AND deleted_for_receiver_at IS NULL)
-		ORDER BY created_at ASC
+		SELECT m.id, m.sender_id, m.receiver_id, m.content, m.is_read, m.created_at,
+		       m.deleted_for_sender_at, m.deleted_for_receiver_at, m.deleted_for_everyone_at,
+		       u.profile_picture_url
+		FROM messages m
+		JOIN users u ON u.id = m.sender_id
+		WHERE (m.sender_id = $1 AND m.receiver_id = $2 AND m.deleted_for_sender_at IS NULL)
+		   OR (m.sender_id = $2 AND m.receiver_id = $1 AND m.deleted_for_receiver_at IS NULL)
+		ORDER BY m.created_at ASC
 		LIMIT $3 OFFSET $4
 	`
 
@@ -199,11 +206,13 @@ func (r *MessageRepository) MarkConversationAsRead(ctx context.Context, userID, 
 
 func (r *MessageRepository) FindByIDsForUser(ctx context.Context, userID uuid.UUID, messageIDs []uuid.UUID) ([]models.Message, error) {
 	const query = `
-		SELECT id, sender_id, receiver_id, content, is_read, created_at,
-		       deleted_for_sender_at, deleted_for_receiver_at, deleted_for_everyone_at
-		FROM messages
-		WHERE id = ANY($1::uuid[])
-		  AND ($2 = sender_id OR $2 = receiver_id)
+		SELECT m.id, m.sender_id, m.receiver_id, m.content, m.is_read, m.created_at,
+		       m.deleted_for_sender_at, m.deleted_for_receiver_at, m.deleted_for_everyone_at,
+		       u.profile_picture_url
+		FROM messages m
+		JOIN users u ON u.id = m.sender_id
+		WHERE m.id = ANY($1::uuid[])
+		  AND ($2 = m.sender_id OR $2 = m.receiver_id)
 	`
 
 	rows, err := r.db.Query(ctx, query, messageIDs, userID)
@@ -309,6 +318,7 @@ func (r *MessageRepository) DeleteConversationForEveryone(ctx context.Context, u
 
 func scanMessage(row pgx.Row) (*models.Message, error) {
 	var message models.Message
+	var senderAvatarURL sql.NullString
 
 	err := row.Scan(
 		&message.ID,
@@ -320,6 +330,7 @@ func scanMessage(row pgx.Row) (*models.Message, error) {
 		&message.DeletedForSenderAt,
 		&message.DeletedForReceiverAt,
 		&message.DeletedForEveryoneAt,
+		&senderAvatarURL,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -327,6 +338,10 @@ func scanMessage(row pgx.Row) (*models.Message, error) {
 		}
 
 		return nil, fmt.Errorf("scan message: %w", err)
+	}
+
+	if senderAvatarURL.Valid {
+		message.SenderAvatarURL = &senderAvatarURL.String
 	}
 
 	return &message, nil

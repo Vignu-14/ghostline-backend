@@ -16,6 +16,7 @@ type Message struct {
 	ID                   uuid.UUID  `json:"id"`
 	SenderID             uuid.UUID  `json:"sender_id"`
 	ReceiverID           uuid.UUID  `json:"receiver_id"`
+	SenderAvatarURL      *string    `json:"sender_avatar_url,omitempty"`
 	Content              string     `json:"content"`
 	IsRead               bool       `json:"is_read"`
 	CreatedAt            time.Time  `json:"created_at"`
@@ -28,6 +29,7 @@ type MessageResponse struct {
 	ID                 string    `json:"id"`
 	SenderID           string    `json:"sender_id"`
 	ReceiverID         string    `json:"receiver_id"`
+	SenderAvatarURL    *string   `json:"sender_avatar_url,omitempty"`
 	Content            string    `json:"content"`
 	IsRead             bool      `json:"is_read"`
 	CreatedAt          time.Time `json:"created_at"`
@@ -65,6 +67,7 @@ func (m Message) ToResponse() MessageResponse {
 		ID:                 m.ID.String(),
 		SenderID:           m.SenderID.String(),
 		ReceiverID:         m.ReceiverID.String(),
+		SenderAvatarURL:    m.SenderAvatarURL,
 		Content:            content,
 		IsRead:             m.IsRead,
 		CreatedAt:          m.CreatedAt,

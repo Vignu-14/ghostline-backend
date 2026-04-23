@@ -39,6 +39,7 @@ func registerAPIRoutes(
 	users.Get("/me", jwtMiddleware.RequireAuth, userHandler.Me)
 	users.Get("/profile/:username", userHandler.Profile)
 	users.Get("/search", userHandler.Search)
+	users.Post("/avatar", jwtMiddleware.RequireAuth, userHandler.UpdateAvatar)
 
 	posts := api.Group("/posts")
 	posts.Post("/upload-url", jwtMiddleware.RequireAuth, rateLimiter.Uploads(), postHandler.CreateUploadURL)

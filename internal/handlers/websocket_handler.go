@@ -23,14 +23,16 @@ type WebSocketHandler struct {
 	chatService *services.ChatService
 	hub         *internalws.Hub
 	jwtConfig   config.JWTConfig
+	corsConfig  config.CORSConfig
 	rateLimiter *middleware.RateLimiter
 }
 
-func NewWebSocketHandler(chatService *services.ChatService, hub *internalws.Hub, jwtConfig config.JWTConfig, rateLimiter *middleware.RateLimiter) *WebSocketHandler {
+func NewWebSocketHandler(chatService *services.ChatService, hub *internalws.Hub, jwtConfig config.JWTConfig, corsConfig config.CORSConfig, rateLimiter *middleware.RateLimiter) *WebSocketHandler {
 	return &WebSocketHandler{
 		chatService: chatService,
 		hub:         hub,
 		jwtConfig:   jwtConfig,
+		corsConfig:  corsConfig,
 		rateLimiter: rateLimiter,
 	}
 }
@@ -38,6 +40,12 @@ func NewWebSocketHandler(chatService *services.ChatService, hub *internalws.Hub,
 func (h *WebSocketHandler) Upgrade(c *fiber.Ctx) error {
 	if !fiberws.IsWebSocketUpgrade(c) {
 		return fiber.ErrUpgradeRequired
+	}
+
+	// Verify origin before upgrading
+	origin := c.Get(fiber.HeaderOrigin)
+	if !h.IsOriginAllowed(origin) {
+		return utils.Error(c, fiber.StatusForbidden, "origin not allowed", nil)
 	}
 
 	// Try to get token from cookie first
@@ -186,6 +194,11 @@ func (h *WebSocketHandler) handleCallWebSocketMessage(client *internalws.Client,
 			_ = client.WriteJSON(internalws.NewErrorEvent("muted state is required"))
 			return
 		}
+	case internalws.EventTypeCallVideoState:
+		if inbound.VideoOff == nil {
+			_ = client.WriteJSON(internalws.NewErrorEvent("video state is required"))
+			return
+		}
 	}
 
 	event := internalws.NewCallEvent(
@@ -197,6 +210,8 @@ func (h *WebSocketHandler) handleCallWebSocketMessage(client *internalws.Client,
 		inbound.Description,
 		inbound.Candidate,
 		inbound.Muted,
+		inbound.VideoOff,
+		inbound.CallType,
 	)
 
 	delivered := internalws.BroadcastToUser(h.hub, receiverID, event)
@@ -223,11 +238,26 @@ func isCallWebSocketEventType(messageType string) bool {
 		internalws.EventTypeCallAnswer,
 		internalws.EventTypeCallICECandidate,
 		internalws.EventTypeCallEnd,
-		internalws.EventTypeCallMuteState:
+		internalws.EventTypeCallMuteState,
+		internalws.EventTypeCallVideoState:
 		return true
 	default:
 		return false
 	}
+}
+
+func (h *WebSocketHandler) IsOriginAllowed(origin string) bool {
+	// Parse comma-separated origins from config.
+	// In a real app, you might want to cache this split slice.
+	allowedOrigins := strings.Split(h.corsConfig.AllowedOrigin, ",")
+	for i := range allowedOrigins {
+		allowedOrigins[i] = strings.TrimSpace(allowedOrigins[i])
+	}
+	if len(allowedOrigins) == 0 || (len(allowedOrigins) == 1 && allowedOrigins[0] == "") {
+		allowedOrigins = []string{"ghostline.reporoot.in", "localhost:3000"} 
+	}
+
+	return middleware.IsOriginAllowed(origin, allowedOrigins)
 }
 
 func (h *WebSocketHandler) websocketErrorMessage(err error) string {

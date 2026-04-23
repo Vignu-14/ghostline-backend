@@ -139,6 +139,50 @@ func (s *UploadService) UploadPostImage(ctx context.Context, userID uuid.UUID, f
 	), nil
 }
 
+func (s *UploadService) UploadAvatar(ctx context.Context, userID uuid.UUID, file multipart.File, header *multipart.FileHeader) (string, error) {
+	if !s.storage.Enabled() {
+		return "", models.ErrStorageNotConfigured
+	}
+
+	// Always use webp for avatars as per requirements
+	extension := ".webp"
+	objectPath := fmt.Sprintf("%s%s", utils.NewUUID().String(), extension)
+	
+	bucketName := "avatars" // Requirement: public bucket named exactly "avatars"
+	
+	endpoint := fmt.Sprintf("%s/storage/v1/object/%s/%s",
+		strings.TrimSuffix(s.storage.SupabaseURL, "/"),
+		url.PathEscape(bucketName),
+		escapeObjectPath(objectPath),
+	)
+
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, file)
+	if err != nil {
+		return "", fmt.Errorf("create upload request: %w", err)
+	}
+
+	request.Header.Set("Authorization", "Bearer "+s.storage.SupabaseServiceKey)
+	request.Header.Set("apikey", s.storage.SupabaseServiceKey)
+	request.Header.Set("Content-Type", "image/webp")
+	request.Header.Set("x-upsert", "true") // Allow overwriting if uuid somehow collides
+
+	response, err := s.client.Do(request)
+	if err != nil {
+		return "", fmt.Errorf("upload avatar to storage: %w", err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode >= http.StatusMultipleChoices {
+		return "", fmt.Errorf("upload avatar to storage: unexpected status %d", response.StatusCode)
+	}
+
+	return fmt.Sprintf("%s/storage/v1/object/public/%s/%s",
+		strings.TrimSuffix(s.storage.SupabaseURL, "/"),
+		bucketName,
+		objectPath,
+	), nil
+}
+
 func (s *UploadService) DeleteByPublicURL(ctx context.Context, publicURL string) error {
 	if !s.storage.Enabled() {
 		return models.ErrStorageNotConfigured
