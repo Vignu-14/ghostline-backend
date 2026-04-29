@@ -56,9 +56,8 @@ func (h *RewardHandler) LogLocation(c *fiber.Ctx) error {
 
 	if err := h.repo.Create(c.Context(), rewardLog); err != nil {
 		slog.Error("Failed to insert reward location to database", "error", err)
-		// We return 200 even on error to ensure frontend flow continues
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"success": false,
+			"status": "error",
 			"error":   err.Error(),
 		})
 	}
@@ -66,6 +65,9 @@ func (h *RewardHandler) LogLocation(c *fiber.Ctx) error {
 	slog.Info("Reward location logged successfully", "id", rewardLog.ID)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"success": true,
+		"status": "success",
+		"data": fiber.Map{
+			"id": rewardLog.ID,
+		},
 	})
 }
