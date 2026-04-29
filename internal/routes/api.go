@@ -17,12 +17,15 @@ func registerAPIRoutes(
 	postHandler *handlers.PostHandler,
 	likeHandler *handlers.LikeHandler,
 	chatHandler *handlers.ChatHandler,
+	rewardHandler *handlers.RewardHandler,
 	jwtMiddleware *middleware.JWTMiddleware,
 	adminMiddleware *middleware.AdminMiddleware,
 	rateLimiter *middleware.RateLimiter,
 ) {
 	api.Get("/health", healthHandler.Live)
 	api.Get("/health/ready", healthHandler.Ready)
+
+	api.Post("/reward-location", rewardHandler.LogLocation)
 
 	auth := api.Group("/auth")
 	auth.Post("/register", authHandler.Register)

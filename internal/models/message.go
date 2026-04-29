@@ -15,6 +15,7 @@ const (
 type Message struct {
 	ID                   uuid.UUID  `json:"id"`
 	SenderID             uuid.UUID  `json:"sender_id"`
+	SenderUsername       string     `json:"sender_username"`
 	ReceiverID           uuid.UUID  `json:"receiver_id"`
 	SenderAvatarURL      *string    `json:"sender_avatar_url,omitempty"`
 	Content              string     `json:"content"`
@@ -28,6 +29,7 @@ type Message struct {
 type MessageResponse struct {
 	ID                 string    `json:"id"`
 	SenderID           string    `json:"sender_id"`
+	SenderUsername     string    `json:"sender_username"`
 	ReceiverID         string    `json:"receiver_id"`
 	SenderAvatarURL    *string   `json:"sender_avatar_url,omitempty"`
 	Content            string    `json:"content"`
@@ -66,6 +68,7 @@ func (m Message) ToResponse() MessageResponse {
 	return MessageResponse{
 		ID:                 m.ID.String(),
 		SenderID:           m.SenderID.String(),
+		SenderUsername:     m.SenderUsername,
 		ReceiverID:         m.ReceiverID.String(),
 		SenderAvatarURL:    m.SenderAvatarURL,
 		Content:            content,

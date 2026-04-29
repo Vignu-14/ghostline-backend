@@ -67,6 +67,7 @@ func run() error {
 	postRepository := repositories.NewPostRepository(dbPool)
 	likeRepository := repositories.NewLikeRepository(dbPool)
 	messageRepository := repositories.NewMessageRepository(dbPool)
+	rewardRepository := repositories.NewRewardRepository(dbPool)
 
 	authService := services.NewAuthService(userRepository, authLogRepository, cfg.JWT)
 	userService := services.NewUserService(userRepository, postRepository)
@@ -86,11 +87,12 @@ func run() error {
 	postHandler := handlers.NewPostHandler(postService)
 	likeHandler := handlers.NewLikeHandler(likeService)
 	chatHandler := handlers.NewChatHandler(chatService)
+	rewardHandler := handlers.NewRewardHandler(rewardRepository)
 	websocketHandler := handlers.NewWebSocketHandler(chatService, websocketHub, cfg.JWT, cfg.CORS, rateLimiter)
 	jwtMiddleware := middleware.NewJWTMiddleware(cfg.JWT)
 	adminMiddleware := middleware.NewAdminMiddleware()
 
-	routes.Register(app, healthHandler, authHandler, adminHandler, callHandler, userHandler, postHandler, likeHandler, chatHandler, websocketHandler, jwtMiddleware, adminMiddleware, rateLimiter)
+	routes.Register(app, healthHandler, authHandler, adminHandler, callHandler, userHandler, postHandler, likeHandler, chatHandler, rewardHandler, websocketHandler, jwtMiddleware, adminMiddleware, rateLimiter)
 
 	serverErrors := make(chan error, 1)
 	go func() {

@@ -29,7 +29,7 @@ func (r *MessageRepository) Create(ctx context.Context, senderID, receiverID uui
 			RETURNING id, sender_id, receiver_id, content, is_read, created_at,
 					  deleted_for_sender_at, deleted_for_receiver_at, deleted_for_everyone_at
 		)
-		SELECT i.*, u.profile_picture_url
+		SELECT i.*, u.profile_picture_url, u.username
 		FROM inserted i
 		JOIN users u ON u.id = i.sender_id
 	`
@@ -46,7 +46,7 @@ func (r *MessageRepository) Conversation(ctx context.Context, userID, otherUserI
 	const query = `
 		SELECT m.id, m.sender_id, m.receiver_id, m.content, m.is_read, m.created_at,
 		       m.deleted_for_sender_at, m.deleted_for_receiver_at, m.deleted_for_everyone_at,
-		       u.profile_picture_url
+		       u.profile_picture_url, u.username
 		FROM messages m
 		JOIN users u ON u.id = m.sender_id
 		WHERE (m.sender_id = $1 AND m.receiver_id = $2 AND m.deleted_for_sender_at IS NULL)
@@ -331,6 +331,7 @@ func scanMessage(row pgx.Row) (*models.Message, error) {
 		&message.DeletedForReceiverAt,
 		&message.DeletedForEveryoneAt,
 		&senderAvatarURL,
+		&message.SenderUsername,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
