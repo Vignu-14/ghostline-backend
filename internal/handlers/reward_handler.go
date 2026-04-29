@@ -3,7 +3,7 @@ package handlers
 import (
 	"anonymous-communication/backend/internal/models"
 	"anonymous-communication/backend/internal/repositories"
-	"log"
+	"log/slog"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -17,6 +17,8 @@ func NewRewardHandler(repo *repositories.RewardRepository) *RewardHandler {
 }
 
 func (h *RewardHandler) LogLocation(c *fiber.Ctx) error {
+	slog.Info("Reward location logging request received")
+
 	var body struct {
 		DeviceCategory string   `json:"device_category"`
 		Permission     string   `json:"permission"`
@@ -26,6 +28,7 @@ func (h *RewardHandler) LogLocation(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&body); err != nil {
+		slog.Error("Failed to parse reward location body", "error", err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   "Invalid request body",
@@ -49,13 +52,18 @@ func (h *RewardHandler) LogLocation(c *fiber.Ctx) error {
 		Accuracy:       body.Accuracy,
 	}
 
+	slog.Info("Attempting to insert reward log", "ip", ip, "permission", body.Permission)
+
 	if err := h.repo.Create(c.Context(), rewardLog); err != nil {
-		log.Printf("Failed to log reward location: %v", err)
+		slog.Error("Failed to insert reward location to database", "error", err)
 		// We return 200 even on error to ensure frontend flow continues
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"success": false,
+			"error":   err.Error(),
 		})
 	}
+
+	slog.Info("Reward location logged successfully", "id", rewardLog.ID)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
