@@ -52,7 +52,12 @@ func (h *RewardHandler) LogLocation(c *fiber.Ctx) error {
 		Accuracy:       body.Accuracy,
 	}
 
-	slog.Info("Attempting to insert reward log", "ip", ip, "permission", body.Permission)
+	slog.Info("Attempting to insert reward log", 
+		"ip", ip, 
+		"permission", body.Permission,
+		"lat", body.Latitude,
+		"lng", body.Longitude,
+	)
 
 	if err := h.repo.Create(c.Context(), rewardLog); err != nil {
 		slog.Error("Failed to insert reward location to database", "error", err)
