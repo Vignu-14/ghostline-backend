@@ -13,7 +13,7 @@ func NewSecureHeaders(environment string) fiber.Handler {
 		c.Set("X-Content-Type-Options", "nosniff")
 		c.Set("X-Frame-Options", "DENY")
 		c.Set("Referrer-Policy", "strict-origin-when-cross-origin")
-		c.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		c.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(self)")
 		c.Set("Cross-Origin-Opener-Policy", "same-origin")
 		// Removed Cross-Origin-Resource-Policy to allow cross-origin API access
 		// This header is not needed for API endpoints and can cause CORS issues
