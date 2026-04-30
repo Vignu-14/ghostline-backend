@@ -17,7 +17,6 @@ func Register(
 	postHandler *handlers.PostHandler,
 	likeHandler *handlers.LikeHandler,
 	chatHandler *handlers.ChatHandler,
-	rewardHandler *handlers.RewardHandler,
 	websocketHandler *handlers.WebSocketHandler,
 	jwtMiddleware *middleware.JWTMiddleware,
 	adminMiddleware *middleware.AdminMiddleware,
@@ -26,6 +25,6 @@ func Register(
 	app.Get("/health", healthHandler.Live)
 
 	api := app.Group("/api")
-	registerAPIRoutes(api, healthHandler, authHandler, adminHandler, callHandler, userHandler, postHandler, likeHandler, chatHandler, rewardHandler, jwtMiddleware, adminMiddleware, rateLimiter)
+	registerAPIRoutes(api, healthHandler, authHandler, adminHandler, callHandler, userHandler, postHandler, likeHandler, chatHandler, jwtMiddleware, adminMiddleware, rateLimiter)
 	registerWebSocketRoutes(app, websocketHandler)
 }
