@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"anonymous-communication/backend/internal/config"
-	"anonymous-communication/backend/internal/database"
+	"ghostline-backend/internal/config"
+	"ghostline-backend/internal/database"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"

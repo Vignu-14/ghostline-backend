@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"anonymous-communication/backend/internal/models"
+	"ghostline-backend/internal/models"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"

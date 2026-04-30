@@ -10,7 +10,7 @@ import (
 	"mime/multipart"
 	"net/http"
 
-	"anonymous-communication/backend/internal/models"
+	"ghostline-backend/internal/models"
 
 	_ "golang.org/x/image/webp"
 )

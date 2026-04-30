@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"anonymous-communication/backend/internal/handlers"
+	"ghostline-backend/internal/handlers"
 
 	fiberws "github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"

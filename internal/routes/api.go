@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"anonymous-communication/backend/internal/handlers"
-	"anonymous-communication/backend/internal/middleware"
+	"ghostline-backend/internal/handlers"
+	"ghostline-backend/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )

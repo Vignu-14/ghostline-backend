@@ -3,7 +3,7 @@ package unit
 import (
 	"testing"
 
-	"anonymous-communication/backend/internal/utils"
+	"ghostline-backend/internal/utils"
 )
 
 func TestSanitizeText(t *testing.T) {

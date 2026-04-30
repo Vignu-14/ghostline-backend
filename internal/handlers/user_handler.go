@@ -3,10 +3,10 @@ package handlers
 import (
 	"errors"
 
-	"anonymous-communication/backend/internal/middleware"
-	"anonymous-communication/backend/internal/models"
-	"anonymous-communication/backend/internal/services"
-	"anonymous-communication/backend/internal/utils"
+	"ghostline-backend/internal/middleware"
+	"ghostline-backend/internal/models"
+	"ghostline-backend/internal/services"
+	"ghostline-backend/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"

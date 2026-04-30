@@ -1,4 +1,4 @@
-module anonymous-communication/backend
+module ghostline-backend
 
 go 1.25.0
 

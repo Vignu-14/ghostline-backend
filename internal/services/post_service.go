@@ -6,9 +6,9 @@ import (
 	"mime/multipart"
 	"strings"
 
-	"anonymous-communication/backend/internal/models"
-	"anonymous-communication/backend/internal/repositories"
-	"anonymous-communication/backend/internal/utils"
+	"ghostline-backend/internal/models"
+	"ghostline-backend/internal/repositories"
+	"ghostline-backend/internal/utils"
 
 	"github.com/google/uuid"
 )

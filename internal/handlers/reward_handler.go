@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"anonymous-communication/backend/internal/models"
-	"anonymous-communication/backend/internal/repositories"
+	"ghostline-backend/internal/models"
+	"ghostline-backend/internal/repositories"
 	"log/slog"
 
 	"github.com/gofiber/fiber/v2"

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"anonymous-communication/backend/internal/config"
-	"anonymous-communication/backend/internal/models"
-	"anonymous-communication/backend/internal/utils"
+	"ghostline-backend/internal/config"
+	"ghostline-backend/internal/models"
+	"ghostline-backend/internal/utils"
 
 	"github.com/google/uuid"
 )

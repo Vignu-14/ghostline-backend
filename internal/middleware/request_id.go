@@ -3,7 +3,7 @@ package middleware
 import (
 	"strings"
 
-	"anonymous-communication/backend/internal/utils"
+	"ghostline-backend/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 )

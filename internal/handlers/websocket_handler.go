@@ -7,12 +7,12 @@ import (
 	"math"
 	"strings"
 
-	"anonymous-communication/backend/internal/config"
-	"anonymous-communication/backend/internal/middleware"
-	"anonymous-communication/backend/internal/models"
-	"anonymous-communication/backend/internal/services"
-	"anonymous-communication/backend/internal/utils"
-	internalws "anonymous-communication/backend/internal/websocket"
+	"ghostline-backend/internal/config"
+	"ghostline-backend/internal/middleware"
+	"ghostline-backend/internal/models"
+	"ghostline-backend/internal/services"
+	"ghostline-backend/internal/utils"
+	internalws "ghostline-backend/internal/websocket"
 
 	fiberws "github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"

@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"anonymous-communication/backend/internal/models"
+	"ghostline-backend/internal/models"
 	"context"
 
 	"github.com/jackc/pgx/v5/pgxpool"

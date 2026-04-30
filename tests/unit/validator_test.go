@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"anonymous-communication/backend/internal/models"
-	"anonymous-communication/backend/internal/utils"
+	"ghostline-backend/internal/models"
+	"ghostline-backend/internal/utils"
 )
 
 func TestValidateRegisterRequest(t *testing.T) {

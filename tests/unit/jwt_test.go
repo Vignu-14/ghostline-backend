@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"anonymous-communication/backend/internal/utils"
+	"ghostline-backend/internal/utils"
 
 	"github.com/google/uuid"
 )

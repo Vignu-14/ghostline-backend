@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"anonymous-communication/backend/internal/config"
-	"anonymous-communication/backend/internal/models"
+	"ghostline-backend/internal/config"
+	"ghostline-backend/internal/models"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"

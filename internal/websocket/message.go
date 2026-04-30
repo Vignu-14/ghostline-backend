@@ -1,6 +1,6 @@
 package websocket
 
-import "anonymous-communication/backend/internal/models"
+import "ghostline-backend/internal/models"
 
 const (
 	EventTypeConnected        = "connected"

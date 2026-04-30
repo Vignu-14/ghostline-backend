@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"anonymous-communication/backend/internal/models"
+	"ghostline-backend/internal/models"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

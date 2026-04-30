@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"anonymous-communication/backend/internal/config"
+	"ghostline-backend/internal/config"
 
 	"github.com/gofiber/fiber/v2"
 	fibercors "github.com/gofiber/fiber/v2/middleware/cors"

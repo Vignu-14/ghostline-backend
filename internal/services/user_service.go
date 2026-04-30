@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"anonymous-communication/backend/internal/models"
+	"ghostline-backend/internal/models"
 
 	"github.com/google/uuid"
 )

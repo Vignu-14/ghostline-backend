@@ -3,8 +3,8 @@ package handlers
 import (
 	"strings"
 
-	"anonymous-communication/backend/internal/config"
-	"anonymous-communication/backend/internal/utils"
+	"ghostline-backend/internal/config"
+	"ghostline-backend/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 )

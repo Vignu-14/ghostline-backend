@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"anonymous-communication/backend/internal/config"
+	"ghostline-backend/internal/config"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
